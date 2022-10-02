@@ -10,7 +10,7 @@ const connection = mysql.createConnection({
 function getBlogList() {
 	return new Promise((resolve, reject) => {
 		try {
-			connection.query('SELECT ID, PROFILE_IMAGE_URL, USERNAME, TITLE, SUBTITLE, KEYWORDS, POST_DATETIME FROM BLOGS', function (error, results, fields) {
+			connection.query('SELECT ID, PROFILE_IMAGE_URL, USERNAME, TITLE, SUBTITLE, KEYWORDS, POST_DATETIME FROM BLOGS ORDER BY POST_DATETIME DESC', function (error, results, fields) {
 				if (error) throw error;
 				const blogs = []
 				if (results.length > 0) {
@@ -85,7 +85,78 @@ function storeBlog(blogData) {
 			};
 			connection.query('INSERT INTO BLOGS SET ?', post, function (error, results, fields) {
 				if (error) throw error;
-				resolve();
+				resolve(true);
+			});
+		} catch (error) {
+			reject(error);
+		}
+	});
+}
+
+function editBlog(blogData) {
+	return new Promise((resolve, reject) => {
+		try {
+			const { id, username, email, profilePicUrl, title, subTitle, keywords, content } = blogData;
+			const post = {
+				'USERNAME': username,
+				'EMAIL': email,
+				'PROFILE_IMAGE_URL': profilePicUrl,
+				'TITLE': title,
+				'SUBTITLE': subTitle,
+				'KEYWORDS': keywords,
+				'CONTENT': content
+			};
+			connection.query('UPDATE BLOGS SET ? WHERE ID = ?', [post, id], function (error, results, fields) {
+				if (error) throw error;
+				resolve(true);
+			});
+		} catch (error) {
+			reject(error);
+		}
+	});
+}
+
+function getComments(blogId) {
+	return new Promise((resolve, reject) => {
+		try {
+			connection.query('SELECT ID, USERNAME, CONTENT, POST_DATETIME FROM COMMENTS WHERE BLOG_ID = ? ORDER BY POST_DATETIME DESC', [blogId], function (error, results, fields) {
+				if (error) throw error;
+				const comments = []
+				if (results.length > 0) {
+					for (const comment of results) {
+						const { ID, USERNAME, CONTENT, POST_DATETIME } = comment;
+						const date = POST_DATETIME.toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+						const time = POST_DATETIME.toLocaleTimeString();
+						const postDateTime = `${date} ${time}`;
+						const commentData = {
+							id: ID,
+							username: USERNAME,
+							content: CONTENT,
+							dateTime: postDateTime
+						};
+						comments.push(commentData);
+					}
+				}
+				resolve(comments);
+			});
+		} catch (error) {
+			reject(error);
+		}
+	});
+}
+
+function storeComment(commentData) {
+	return new Promise((resolve, reject) => {
+		try {
+			const { username, blogId, content } = commentData;
+			const post = {
+				'USERNAME': username,
+				'CONTENT': content,
+				'BLOG_ID': blogId
+			};
+			connection.query('INSERT INTO COMMENTS SET ?', post, function (error, results, fields) {
+				if (error) throw error;
+				resolve(true);
 			});
 		} catch (error) {
 			reject(error);
@@ -96,3 +167,6 @@ function storeBlog(blogData) {
 exports.getBlog = getBlog;
 exports.getBlogList = getBlogList;
 exports.storeBlog = storeBlog;
+exports.editBlog = editBlog;
+exports.getComments = getComments;
+exports.storeComment = storeComment;

@@ -1,8 +1,6 @@
-require("dotenv").config();
-
 const express = require("express");
 const cors = require('cors');
-const { getBlogList, getBlog, storeBlog } = require("./dbService");
+const { getBlogList, getBlog, storeBlog, editBlog, getComments, storeComment } = require("./dbService");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,10 +30,41 @@ app.get("/blogs", async (req, res) => {
 	}
 });
 
+app.get("/comments/:blogId", async (req, res) => {
+	try {
+		const blogId = req.params.blogId;
+		const blogs = await getComments(blogId);
+		res.send(blogs);
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.post("/comment", async (req, res) => {
+	try {
+		const commentData = req.body;
+		await storeComment(commentData);
+		res.send();
+	} catch (error) {
+		console.log(error);
+	}
+});
+
 app.post("/publish", async (req, res) => {
 	try {
 		const blogData = req.body;
 		await storeBlog(blogData);
+		res.send();
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.post("/edit", async (req, res) => {
+	try {
+		const blogData = req.body;
+		await editBlog(blogData);
+		res.send();
 	} catch (error) {
 		console.log(error);
 	}
