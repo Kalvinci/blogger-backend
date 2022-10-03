@@ -1,21 +1,27 @@
 const express = require("express");
-const cors = require('cors');
-const { getBlogList, getBlog, storeBlog, editBlog, getComments, storeComment } = require("./dbService");
+const {
+	getBlogList,
+	getBlog,
+	storeBlog,
+	editBlog,
+	deleteBlog,
+	getComments,
+	storeComment,
+	createUser,
+	getUser,
+	getUserBlogList
+} = require("./dbService");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(cors({
-	origin: 'http://localhost:3000',
-	credentials: true
-}));
 
 app.get("/blogs/:blogId", async (req, res) => {
 	try {
 		const blogId = req.params.blogId;
 		const blogData = await getBlog(blogId);
-		res.send(blogData);
+		return res.send(blogData);
 	} catch (error) {
 		console.log(error);
 	}
@@ -24,7 +30,17 @@ app.get("/blogs/:blogId", async (req, res) => {
 app.get("/blogs", async (req, res) => {
 	try {
 		const blogs = await getBlogList();
-		res.send(blogs);
+		return res.send(blogs);
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.get("/userblogs/:userId", async (req, res) => {
+	try {
+		const userId = req.params.userId;
+		const blogs = await getUserBlogList(userId);
+		return res.send(blogs);
 	} catch (error) {
 		console.log(error);
 	}
@@ -34,7 +50,7 @@ app.get("/comments/:blogId", async (req, res) => {
 	try {
 		const blogId = req.params.blogId;
 		const blogs = await getComments(blogId);
-		res.send(blogs);
+		return res.send(blogs);
 	} catch (error) {
 		console.log(error);
 	}
@@ -44,7 +60,7 @@ app.post("/comment", async (req, res) => {
 	try {
 		const commentData = req.body;
 		await storeComment(commentData);
-		res.send();
+		return res.send();
 	} catch (error) {
 		console.log(error);
 	}
@@ -53,8 +69,8 @@ app.post("/comment", async (req, res) => {
 app.post("/publish", async (req, res) => {
 	try {
 		const blogData = req.body;
-		await storeBlog(blogData);
-		res.send();
+		const blogId = await storeBlog(blogData);
+		return res.send({ blogId });
 	} catch (error) {
 		console.log(error);
 	}
@@ -64,7 +80,38 @@ app.post("/edit", async (req, res) => {
 	try {
 		const blogData = req.body;
 		await editBlog(blogData);
-		res.send();
+		return res.send();
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.post("/delete", async (req, res) => {
+	try {
+		const { blogId } = req.body;
+		await deleteBlog(blogId);
+		return res.send();
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+
+app.post("/login", async (req, res) => {
+	try {
+		const data = req.body;
+		const userData = await getUser(data);
+		return res.send(userData);
+	} catch (error) {
+		console.log(error);
+	}
+});
+
+app.post("/signup", async (req, res) => {
+	try {
+		const data = req.body;
+		await createUser(data);
+		return res.send();
 	} catch (error) {
 		console.log(error);
 	}
